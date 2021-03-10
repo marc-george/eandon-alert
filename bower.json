@@ -1,0 +1,38 @@
+{
+  "name": "eandon-alert",
+  "main": "eandon-alert.html",
+  "version": "1.2.0",
+  "ignore": [
+    "bower_components"
+  ],
+  "dependencies": {
+    "polymer": "^1.6.1",
+    "px-theme": "^2.0.1",
+    "lodash": "^4.16.2",
+    "px-alert-label": "^1.2.0",
+    "moment": "^2.17.1",
+    "px-action-menu": "brianhenzelmann/px-action-menu#0.1.x"
+  },
+  "devDependencies": {
+    "px-starter-kit-design": "^0.7.0",
+    "px-layout-design": "^0.4.0",
+    "px-spacing-design": "^0.4.0",
+    "px-buttons-design": "^1.1.0",
+    "px-headings-design": "^0.3.0",
+    "px-helpers-design": "^0.3.5",
+    "px-forms-design": "^1.1.0",
+    "px-flexbox-design": "^0.4.0",
+    "px-normalize-design": "^0.4.0",
+    "px-defaults-design": "^1.0.2",
+    "px-colors-design": "^0.3.0",
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "web-component-tester": "^4.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+  },
+  "resolutions": {
+    "px-theme": "^2.0.1",
+    "px-flexbox-design": "^0.5.0",
+    "lodash": "^4.16.2"
+  }
+}

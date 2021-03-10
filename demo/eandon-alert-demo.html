@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>eandon-alert demo</title>
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+    <link rel="import" href="../eandon-alert.html">
+
+    <style is="custom-style" include="demo-pages-shared-styles">
+    </style>
+  </head>
+  <body>
+    <div class="vertical-section-container centered">
+      <h3>Basic eandon-alert demo</h3>
+      <demo-snippet style="width:1400px; margin-left:-500px">
+        <template >
+          <eandon-alert
+            alert='{"id":22864,"alertDefinition":{"id":7729,"alertType":{"id":54,"name":"Brilliant Error","description":"This is the Brilliant Error Type","locationId":"4b9213de-75a4-49d2-9b31-77124fe84bdc","archived":false,"lastUpdatedDate":1484252987368,"lastUpdatedByUserString":"Lane Konkel","userSubscribed":false},"alertDefinitionSlas":[{"id":11933,"order":1,"numberOfMinutes":30},{"id":11934,"order":2,"numberOfMinutes":60},{"id":11935,"order":3,"numberOfMinutes":120},{"id":11936,"order":4,"numberOfMinutes":240}],"locationId":"5d58fa63-d4a4-4b9b-8c2b-291f7a674ac9","name":"_Kalebs Test","description":"test","qrCode":"dc3ba7fc-1bdb-4303-8efe-73d27559472e","onlyOneActive":null,"archived":false,"lastUpdatedByUserString":"Kaleb McKelvey","lastUpdatedDate":1497018937328,"hasSlaCoverage":false,"hasStatusCoverage":false,"customFields":[{"id":17,"locationId":"4b9213de-75a4-49d2-9b31-77124fe84bdc","name":"Avatar Gender","type":"Alphanumeric","options":null},{"id":18,"locationId":"4b9213de-75a4-49d2-9b31-77124fe84bdc","name":"Avatar Age","type":"Alphanumeric","options":null},{"id":9,"locationId":"4b9213de-75a4-49d2-9b31-77124fe84bdc","name":"Avatar_name","type":"alphanumeric","options":"string"}]},"slaCheckTimestamp":1497020525204,"initiateTimestamp":1497020525204,"acknowledgeTimestamp":null,"resolveTimestamp":null,"alertSlaCount":4,"status":"Initiated","slaPause":false,"slaPauseDatetime":null,"alertComments":[{"id":33509,"alertComment":"","alertCommentDate":1497020525208,"alertCommentType":"Initiated","userString":"Kaleb McKelvey","sso":"212445846"}],"initiatedByUserString":"Kaleb McKelvey","acknowledgedByUserString":"","resolvedByUserString":"","customFields":"[{\"id\":18,\"name\":\"Avatar Age\",\"value\":\"220\",\"$$hashKey\":\"object:139\"},{\"id\":9,\"name\":\"Avatar_name\",\"value\":\"dude\",\"$$hashKey\":\"object:140\"},{\"id\":17,\"name\":\"Avatar Gender\",\"value\":\"duder\",\"$$hashKey\":\"object:141\"}]","loading":true,"deleted":false,"alertTypeId":54,"userSubscribed":false,"locationName":"1st Floor"}'
+            is-actionable="true"
+            is-expanded="true"
+            user-is-admin="true"
+            >
+          </eandon-alert>
+        </template>
+      </demo-snippet>
+    </div>
+  </body>
+</html>

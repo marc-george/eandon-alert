@@ -1,0 +1,843 @@
+<!--
+################################################
+
+
+Author: Connor Schnaith <connor.schnaith@ge.com>
+Updated: March 6th 2017 - Andrew Severson <andrew.severson@ge.com>
+Updated: July 14th 2017 - Jessica Hasslinger <jessica.hasslinger@ge.com>
+
+################################################
+
+@demo demo/eandon-alert-demo.html
+-->
+
+<link rel="import" href="../polymer/polymer.html" />
+<link rel="import" href="../px-alert-label/px-alert-label.html" />
+<link rel="import" href="../px-action-menu/px-action-menu.html" />
+<link rel="import" href="../px-popover/px-popover.html" />
+
+<script src="../moment/moment.js"></script>
+<script src="../lodash/lodash.js"></script>
+
+<link rel="stylesheet" type="text/css" href="../font-awesome/css/font-awesome.min.css" />
+<link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="css/eandon-alert-styles.html" />
+
+<dom-module id='eandon-alert'>
+  <template>
+    <style include="eandon-alert-styles"></style>
+    <template is="dom-if" if="{{isLoading}}">
+      <div class="u-p b-white">
+        <px-spinner class="alert-loading-icon"></px-spinner>
+      </div>
+    </template>
+    <template is="dom-if" if="{{!isLoading}}">
+      <div id="contentWrapper" class="height-100percent u-p b-white">
+        <!-- Header -->
+        <template is='dom-if' if='[[_showCompactList]]'>
+          <div class="layout layout--bottom">
+            <div class='layout__item u-1/6'>
+              <px-alert-label class="zeta" type$="{{alertLabelTypeIs(alert)}}" label$="{{alertLabelIs(alert, refreshTick)}}"></px-alert-label>
+            </div>
+            <div class='layout__item'>
+              <span class="epsilon break-word weight--semibold">{{alert.alertDefinition.alertType.name}}</span>
+            </div>
+            <div class="layout__item">
+              <span class="break-word u-mt-">{{alert.alertDefinition.name}}</span>
+            </div>
+            <div class="layout__item u-1/4">
+              <div class="flex flex--stretch">
+                {{alert.locationName}}
+              </div>
+            </div>
+            <div class='layout__item u-1/4'>
+              <div class='flex flex--stretch'>
+                {{initiatedDateIs(alert, refreshTick)}}
+              </div>
+            </div>
+            <div class="layout__item">
+              <div class="flex flex--right">
+                <span class="weight--semibold">{{translateText('SLA', refreshTick)}}&nbsp; {{slaCountIs(alert)}}</span>
+              </div>
+            </div>
+            <div class="layout__item u-1/6">
+              <div class='flex flex--right'>
+                  <i class="fa fa-chevron-right pointer" on-click="fireChevronClickEvent"></i>
+              </div>
+            </div>
+          </div>
+        </template>
+        <template is='dom-if' if="[[_showCompact]]">
+          <div class='flex flex--row'>
+            <div class='flex--left flex__item--middle'>
+                <px-alert-label class="u-mr zeta" type$="{{alertLabelTypeIs(alert)}}" label$="{{alertLabelIs(alert, refreshTick)}}"></px-alert-label>
+            </div>
+            <div class="flex--left flex__item--middle grow">
+              <span class="epsilon break-word weight--semibold">{{alert.alertDefinition.alertType.name}}</span>
+            </div>
+            <div class="flex__item--middle">
+              <i class="fa fa-chevron-right pointer" on-click="fireChevronClickEvent"></i>
+            </div>
+          </div>
+          <div class='flex flex--row flex--stretch'>
+            <div class='flex flex--col flex--left'>
+              <span class="break-word u-mt-">{{alert.alertDefinition.name}}</span>
+            </div>
+          </div>
+          <div class='flex flex--row flex--stretch'>
+            <div class='flex flex--col flex--left'>
+              <div>{{alert.locationName}}</div>
+            </div>
+          </div>
+
+          <div class='flex flex--row flex--stretch flex--justify'>
+            <div class='flex flex--col'>
+              <div>{{initiatedDateIs(alert, refreshTick)}}</div>
+            </div>
+            <div class='flex flex--col'>
+              <span class="weight--semibold">
+                {{translateText('SLA', refreshTick)}}
+                <span class="weight--semibold">{{slaCountIs(alert)}}</span>
+              </span>
+            </div>
+          </div>
+      </div>
+      </template>
+      <template is='dom-if' if='[[_showRegular]]'>
+        <div id="header" class="flex flex--row flex--justify flex--top">
+          <div class="overflow-hidden u-mr flex flex--row flex--left flex--top">
+            <px-alert-label class="u-mr zeta" type$="{{alertLabelTypeIs(alert)}}" label$="{{alertLabelIs(alert, refreshTick)}}">
+            </px-alert-label>
+            <span class="epsilon break-word weight--semibold caps flex__item--middle">
+              {{alert.alertDefinition.alertType.name}}</span>
+          </div>
+          <!-- Action Buttons -->
+          <template is="dom-if" if="{{isActionable}}">
+
+            <div class="flex flex--row flex--right flex--top">
+              <px-action-menu style$="{{actionMenuDisplayIs(alert,userIsAdmin,isExpanded)}}">
+                <button class="btn btn--tertiary btn--large lb-white">
+                  {{translateText('More Actions', refreshTick)}}
+                  <i class="fa fa-chevron-down"></i>
+                </button>
+                <template is="dom-repeat" items="{{listOfActionsIs(alert,userIsAdmin,isExpanded)}}">
+                  <px-action-menu-item label="{{item.label}}" event-name="{{item.event}}">
+                  </px-action-menu-item>
+                </template>
+              </px-action-menu>
+              <button on-click="actionBtnClicked" original-action="{{secondaryBtnActionIsEnglish(alert)}}" class$="{{secondaryBtnClassStrIs(alert)}}"
+                style$={{secondaryBtnDisplayIs(alert,userIsAdmin,isExpanded)}}>
+                {{secondaryBtnActionIs(alert, refreshTick)}}
+              </button>
+              <button class="btn u-ml btn--primary" on-click="actionBtnClicked" original-action="{{primaryBtnActionIsEnglish(alert)}}"
+                style$="{{primaryBtnDisplayIs(alert)}}">{{primaryBtnActionIs(alert, refreshTick)}}
+              </button>
+            </div>
+          </template>
+          <!-- /Action Buttons -->
+        </div>
+        <!-- /Header -->
+        <hr id="horizontalDivider" class="u-mt u-mb horizontalDivider">
+        <!-- Alert Content -->
+
+        <div class="flex flex--row flex--left flex--stretch">
+          <!-- Left Block  -->
+
+          <div class="width-33percent u-pr flex flex--col flex--left flex--stretch flex__item">
+            <span class="delta break-word">{{alert.alertDefinition.name}}</span>
+            <div class="u-mt flex flex--row flex--left flex--top">
+              <!-- SLA Column -->
+
+              <div class="u-mr++ flex flex--col flex--left flex--top width-30percent">
+                <span class="delta c-select-blue nowrap">{{translateText('SLA', refreshTick)}}
+                  <span class="weight--semibold">{{slaCountIs(alert)}}</span>
+                </span>
+                <div class="u-mt-- flex flex--row flex--left flex--top">
+                  <i class="fa fa-map-marker zeta c-select-blue"></i>
+                  <div class="u-ml--">
+                    <span class="c-select-blue zeta">{{translateText('Location', refreshTick)}}</span>
+                    <div>{{alert.locationName}}</div>
+                  </div>
+                </div>
+                <div class="u-mt-- flex flex--row flex--left flex--top">
+                  <i class="fa fa-hashtag zeta c-select-blue icon-sizing"></i>
+                  <div class="u-ml--">
+                    <span class="c-select-blue zeta">{{translateText('Alert ID', refreshTick)}}</span>
+                    <div>{{alert.id}}</div>
+                  </div>
+                </div>
+                <div class="u-mt+" hidden$={{!slaIsPaused(alert)}}>
+                  <i class="fa fa-warning epsilon c-alert-red u-mr--"></i>
+                  <span class="weight--semibold nowrap">{{translateText('SLA Paused', refreshTick)}}</span>
+                </div>
+              </div>
+              <!-- /SLA Column -->
+              <!-- Status Logs Column -->
+
+              <div class="u-mr++ flex flex--col flex--left flex--stretch width-60percent">
+
+                <div class="u-mb+ flex flex--row flex--left flex--top" style$="{{resolvedByDisplay(alert)}}">
+                  <div class="u-mr++ flex flex--row flex--left flex--top u-1/2-min">
+                    <i class="fa fa-clock-o zeta c-select-blue"></i>
+                    <div class="u-ml--">
+                      <span class="c-select-blue zeta">{{translateText('Resolved', refreshTick)}}</span>
+                      <div>{{resolvedDateIs(alert, refreshTick)}}</div>
+                    </div>
+                  </div>
+                  <div class="flex flex--row flex--left flex--top u-1/2">
+                    <i class="fa fa-user zeta c-select-blue"></i>
+                    <div class="u-ml--">
+                      <span class="c-select-blue zeta nowrap">{{translateText('Resolved By', refreshTick)}}</span>
+                      <div>{{resolvedByUserIs(alert)}}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="u-mb+ flex flex--row flex--left flex--top" style$="{{acknowledgedByDisplay(alert)}}">
+                  <div class="u-mr++ flex flex--row flex--left flex--top u-1/2-min">
+                    <i class="fa fa-clock-o zeta c-select-blue"></i>
+                    <div class="u-ml--">
+                      <span class="c-select-blue zeta">{{translateText('Acknowledged', refreshTick)}}</span>
+                      <div>{{acknowledgedDateIs(alert)}}</div>
+                    </div>
+                  </div>
+                  <div class="flex flex--row flex--left flex--top u-1/2">
+                    <i class="fa fa-user zeta c-select-blue"></i>
+                    <div class="u-ml--">
+                      <span class="c-select-blue zeta nowrap">{{translateText('Acknowledged By', refreshTick)}}</span>
+                      <div>{{acknowledgedByUserIs(alert)}}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="u-mb+ flex flex--row flex--left flex--top" style$="{{initiatedByDisplay(alert)}}">
+                  <div class="u-mr++ flex flex--row flex--left flex--top u-1/2-min">
+                    <i class="fa fa-clock-o zeta c-select-blue"></i>
+                    <div class="u-ml--">
+                      <span class="c-select-blue zeta">{{translateText('Initiated', refreshTick)}}</span>
+                      <div>{{initiatedDateIs(alert, refreshTick)}}</div>
+                    </div>
+                  </div>
+                  <div class="flex flex--row flex--left flex--top u-1/2">
+                    <i class="fa fa-user zeta c-select-blue"></i>
+                    <div class="u-ml--">
+                      <span class="c-select-blue zeta nowrap">{{translateText('Initiated By', refreshTick)}}</span>
+                      <div>{{initiatedByUserIs(alert)}}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- /Status Logs Column -->
+
+            </div>
+          </div>
+          <!-- /Left Block -->
+          <!-- Center Block -->
+          <div id="centerBlock" class="overflow-hidden u-pl u-pr flex u-1/3 u-1/3-min flex--col flex--left flex--top flex__item" style$="{{displayCenterBlock(isExpanded)}}">
+            <span class="u-mb">
+              <span class="u-mr-- weight--semibold">{{translateText('Custom Fields', refreshTick)}}</span>
+              <span class="pointer zeta lc-primary-blue" on-click="updateCustomFieldsClick">{{translateText('Update Values', refreshTick)}}</span>
+            </span>
+            <template is="dom-repeat" items="{{listOfCustomFieldsIs(alert)}}">
+              <span class="u-mb u-ml+">
+                <span>{{item.name}}</span>
+                <span class="c-gray8 break-word break-all">/ {{getCustomFieldValueById(item.id)}}</span>
+              </span>
+            </template>
+          </div>
+          <!-- /Center Block -->
+          <!-- Right Block -->
+
+          <div id="rightBlock" class="u-pl flex u-1/3 u-1/3-min flex--col flex--left flex--top flex__item" style$="{{displayRightBlock(isExpanded)}}">
+            <span class="u-mb">
+              <span class="u-mr-- weight--semibold">{{translateText('Comments', refreshTick)}}</span>
+              <span class="pointer zeta lc-primary-blue" on-click="addCommentClick">{{translateText('Add Comment', refreshTick)}}</span>
+            </span>
+            <template is="dom-repeat" items="{{listOfCommentsIs(alert)}}">
+              <span class="zeta">
+                <span class$="{{commentCircleColorIs(item)}}">
+                  <i class="fa fa-circle zeta u-mr--"></i>
+                </span>
+                <span>{{commentDateIs(item)}}</span>
+                <span class="c-gray8">/ {{commentTypeIs(item)}} / {{commentUserIs(item)}}</span>
+              </span>
+              <span class="u-mb">{{commentIs(item)}}</span>
+            </template>
+          </div>
+          <!-- /Right Block -->
+
+        </div>
+        <!-- /Alert Content -->
+      </template>
+
+      <template is='dom-if' if='[[_showDetailed]]'>
+        <div id="header" class="flex flex--row flex--justify flex--top nowrap">
+          <div class="overflow-hidden u-mr flex flex--row flex--left flex--top">
+            <px-alert-label class="u-mr zeta" type$="{{alertLabelTypeIs(alert)}}" label$="{{alertLabelIs(alert, refreshTick)}}">
+            </px-alert-label>
+            <span class="epsilon weight--semibold caps flex__item--middle">
+              {{alert.alertDefinition.alertType.name}}</span>
+            <span class="epsilon flex__item--middle">&nbsp;- {{alert.alertDefinition.name}}</span>
+          </div>
+          <!-- Action Buttons -->
+          <template is="dom-if" if="{{isActionable}}">
+            <div class="flex flex--row flex--right flex--top">
+              <button on-click="actionBtnClicked" original-action="{{secondaryBtnActionIsEnglish(alert)}}" class$="{{secondaryBtnClassStrIs(alert)}}"
+                style$={{secondaryBtnDisplayIs(alert,userIsAdmin,isExpanded)}}>
+                {{secondaryBtnActionIs(alert, refreshTick)}}
+              </button>
+              <button class="btn u-ml btn--primary" on-click="actionBtnClicked" original-action="{{primaryBtnActionIsEnglish(alert)}}"
+                style$="{{primaryBtnDisplayIs(alert)}}">{{primaryBtnActionIs(alert, refreshTick)}}
+              </button>
+              <px-action-menu style$="{{actionMenuDisplayIs(alert,userIsAdmin,isExpanded)}}">
+                <button class="btn btn--tertiary btn--large lb-white">
+                  {{translateText('More Actions', refreshTick)}}
+                  <i class="fa fa-chevron-down"></i>
+                </button>
+                <template is="dom-repeat" items="{{listOfActionsIs(alert,userIsAdmin,isExpanded)}}">
+                  <px-action-menu-item label="{{item.label}}" event-name="{{item.event}}">
+                  </px-action-menu-item>
+                </template>
+              </px-action-menu>
+            </div>
+          </template>
+          <!-- /Action Buttons -->
+        </div>
+        <!-- /Header -->
+        <hr id="horizontalDividerTop" class="u-mt u-mb horizontalDivider">
+        <!-- Alert Content -->
+
+        <div class="flex flex--col flex--left flex--stretch">
+          <!-- Left Block  -->
+
+          <div class="u-pr flex flex--row flex--left flex--stretch flex__item">
+            <div class="u-mt flex flex--row flex--left flex--top">
+              <!-- SLA Column -->
+
+              <div class="u-mr++ flex flex--col flex--left flex--top width-30percent">
+                <span class="delta c-select-blue nowrap">{{translateText('SLA', refreshTick)}}
+                  <span class="weight--semibold">{{slaCountIs(alert)}}</span>
+                </span>
+                <div class="u-mt-- flex flex--row flex--left flex--top">
+                  <i class="fa fa-map-marker zeta c-select-blue"></i>
+                  <div class="u-ml--">
+                    <span class="c-select-blue zeta">{{translateText('Location', refreshTick)}}</span>
+                    <div>{{alert.locationName}}</div>
+                  </div>
+                </div>
+                <div class="u-mt+" hidden$={{!slaIsPaused(alert)}}>
+                  <i class="fa fa-warning epsilon c-alert-red u-mr--"></i>
+                  <span class="weight--semibold nowrap">{{translateText('SLA Paused', refreshTick)}}</span>
+                </div>
+              </div>
+              <!-- /SLA Column -->
+              <!-- Status Logs Column -->
+
+              <div class="u-mr++ flex flex--row flex--left flex--stretch width-60percent">
+
+                <div class="u-mb+ flex flex--col flex--left flex--top" style$="{{initiatedByDisplay(alert)}}">
+                  <div class="u-mr++ flex flex--row flex--left flex--top u-1/2-min">
+                    <i class="fa fa-clock-o zeta c-select-blue"></i>
+                    <div class="u-ml--">
+                      <span class="c-select-blue zeta">{{translateText('Initiated', refreshTick)}}</span>
+                      <div>{{initiatedDateIs(alert, refreshTick)}}</div>
+                    </div>
+                  </div>
+                  <div class="flex flex--row flex--left flex--top u-1/2">
+                    <i class="fa fa-user zeta c-select-blue"></i>
+                    <div class="u-ml--">
+                      <span class="c-select-blue zeta nowrap">{{translateText('Initiated By', refreshTick)}}</span>
+                      <div>{{initiatedByUserIs(alert)}}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="u-mb+ flex flex--col flex--left flex--top" style$="{{acknowledgedByDisplay(alert)}}">
+                  <div class="u-mr++ flex flex--row flex--left flex--top u-1/2-min">
+                    <i class="fa fa-clock-o zeta c-select-blue"></i>
+                    <div class="u-ml--">
+                      <span class="c-select-blue zeta">{{translateText('Acknowledged', refreshTick)}}</span>
+                      <div>{{acknowledgedDateIs(alert)}}</div>
+                    </div>
+                  </div>
+                  <div class="flex flex--row flex--left flex--top u-1/2">
+                    <i class="fa fa-user zeta c-select-blue"></i>
+                    <div class="u-ml--">
+                      <span class="c-select-blue zeta nowrap">{{translateText('Acknowledged By', refreshTick)}}</span>
+                      <div>{{acknowledgedByUserIs(alert)}}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="u-mb+ flex flex--col flex--left flex--top" style$="{{resolvedByDisplay(alert)}}">
+                  <div class="u-mr++ flex flex--row flex--left flex--top u-1/2-min">
+                    <i class="fa fa-clock-o zeta c-select-blue"></i>
+                    <div class="u-ml--">
+                      <span class="c-select-blue zeta">{{translateText('Resolved', refreshTick)}}</span>
+                      <div>{{resolvedDateIs(alert, refreshTick)}}</div>
+                    </div>
+                  </div>
+                  <div class="flex flex--row flex--left flex--top u-1/2">
+                    <i class="fa fa-user zeta c-select-blue"></i>
+                    <div class="u-ml--">
+                      <span class="c-select-blue zeta nowrap">{{translateText('Resolved By', refreshTick)}}</span>
+                      <div>{{resolvedByUserIs(alert)}}</div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              <!-- /Status Logs Column -->
+
+            </div>
+          </div>
+          <!-- /Left Block -->
+          <hr id="horizontalDividerMiddle" class="u-mt u-mb horizontalDivider">
+          <!-- Center Block -->
+          <span class="u-mb">
+            <span class="u-mr-- weight--semibold">{{translateText('Custom Fields', refreshTick)}}</span>
+            <span class="pointer zeta lc-primary-blue" on-click="updateCustomFieldsClick">{{translateText('Update Values', refreshTick)}}</span>
+          </span>
+          <div id="centerBlockDetailed" class="overflow-hidden flex flex--row flex--left flex--top flex__item" style$="{{displayCenterBlock(isExpanded)}}">
+            <template is="dom-repeat" items="{{listOfCustomFieldsIs(alert)}}">
+              <div class="u-mb u-mr+">
+                <div>{{item.name}}</div>
+                <div class="c-gray8 break-word break-all">{{getCustomFieldValueById(item.id)}}</div>
+              </div>
+            </template>
+          </div>
+          <!-- /Center Block -->
+          <hr id="horizontalDividerBottom" class="u-mt u-mb horizontalDivider">
+          <!-- Right Block -->
+
+          <div id="rightBlockDetailed" class="flex flex--col flex--left flex--top flex__item" style$="{{displayRightBlock(isExpanded)}}">
+            <span class="u-mb">
+              <span class="u-mr-- weight--semibold">{{translateText('Comments', refreshTick)}}</span>
+              <span class="pointer zeta lc-primary-blue" on-click="addCommentClick">{{translateText('Add Comment', refreshTick)}}</span>
+            </span>
+            <template is="dom-repeat" items="{{listOfCommentsIs(alert)}}">
+              <span class="zeta">
+                <span class$="{{commentCircleColorIs(item)}}">
+                  <i class="fa fa-circle zeta u-mr--"></i>
+                </span>
+                <span>{{commentDateIs(item)}}</span>
+                <span class="c-gray8">/ {{commentTypeIs(item)}} / {{commentUserIs(item)}}</span>
+              </span>
+              <span class="u-mb">{{commentIs(item)}}</span>
+            </template>
+          </div>
+          <!-- /Right Block -->
+
+        </div>
+        <!-- /Alert Content -->
+      </template>
+
+
+    </template>
+  </template>
+
+  <script>
+    Polymer({
+      is: "eandon-alert",
+      properties: {
+        userIsAdmin: {
+          type: Object,
+          value: false,
+        },
+
+        alert: {
+          type: Object
+        },
+
+        refreshTick: new Date(),
+
+        viewType: {
+          type: String,
+          value: 'regular', // possibles values [regular, compact, compact-list, detailed]
+          observer: '_viewChanged'
+        },
+
+        _showRegular: {
+          type: Boolean,
+          value: true
+        },
+
+        _showCompact: {
+          type: Boolean,
+          value: false
+        },
+
+        _showCompactList: {
+          type: Boolean,
+          value: false
+        },
+
+        _showDetailed: {
+          type: Boolean,
+          value: false
+        },
+
+        isExpanded: {
+          type: Object,
+          value: function () {
+            return false;
+          }
+        },
+
+        isLoading: {
+          type: Object,
+          value: function () {
+            return true;
+          }
+        },
+
+        showLoading: {
+          type: Object,
+          value: function() {
+            return true;
+          },
+        },
+
+        translations: {
+          type: Array
+        },
+
+        isActionable: {
+          type: Object,
+          value: function () {
+            return true;
+          }
+        },
+      },
+
+      listeners: {
+        "px-action-menu-item-clicked": "moreActionsItemClicked"
+      },
+
+      ready: function () {
+        const _this = this;
+        if (!this.showLoading) {
+          this.isLoading = false;
+        }
+
+        setTimeout(function () {
+            // make sure items are rendered on card load
+            _this.refreshTick = new Date();
+            _this.isLoading = false;
+          }, 1000);
+
+      },
+
+
+      _viewChanged: function(newView) {
+        this._showCompactList = false;
+        this._showCompact = false;
+        this._showRegular = false;
+        this._showDetailed = false;
+        switch (newView) {
+          case 'compact':
+            this._showCompact = true;
+          break;
+          case 'compact-list':
+            this._showCompactList = true;
+          break;
+          case 'detailed':
+            this._showDetailed = true;
+          break;
+          default:
+            this._showRegular = true;
+          break;
+        }
+      },
+
+      slaIsPaused: function (alert) {
+        return alert.slaPause;
+      },
+
+      translateText: function (text) {
+        if (this.translations === false || this.translations === undefined || this.translations === null) {
+          return text;
+        }
+
+        const translation = this.translations[text];
+        if (translation !== undefined) {
+          return translation;
+        }
+        return text;
+      },
+
+      actionBtnClicked: function (e) {
+        lowerCaseAction = e.target.originalAction.toLowerCase();
+        this.fireSimpleAlertEvent(lowerCaseAction);
+      },
+
+      moreActionsItemClicked: function (e) {
+        this.fireSimpleAlertEvent(e.target.eventName);
+      },
+
+      addCommentClick: function () {
+        this.fireSimpleAlertEvent("comment");
+      },
+
+      updateCustomFieldsClick: function () {
+        this.fireSimpleAlertEvent("update-custom-fields");
+      },
+
+      listOfActionsIs: function (alert, userIsAdmin, isExpanded) {
+        const actions = [];
+        if (!alert) return actions;
+        if (alert.status === "Initiated" && !isExpanded) {
+          actions.push({ "event": "resolve", "label": this.translateText("Resolve Alert") });
+        }
+        if (alert.status === "Acknowledged" && !isExpanded) {
+          actions.push({ "event": "unacknowledge", "label": this.translateText("Unacknowledge Alert") });
+        }
+        if (userIsAdmin) {
+          actions.push({ "event": "update", "label": this.translateText("Update Alert") });
+        }
+        if (alert.status != "Resolved" && userIsAdmin) {
+          actions.push({ "event": "delete", "label": this.translateText("Delete Alert") });
+        }
+        if (!alert.slaPause && userIsAdmin) {
+          actions.push({ "event": "pause", "label": this.translateText("Pause SLA") });
+        }
+        if (alert.slaPause && userIsAdmin) {
+          actions.push({ "event": "resume", "label": this.translateText("Resume SLA") });
+        }
+        if (userIsAdmin) {
+          actions.push({ "event": "escalate", "label": this.translateText("Escalate SLA") });
+        }
+        return actions;
+      },
+
+      fireSimpleAlertEvent: function (name) {
+        this.fire("eandon-alert-" + name, this.alert);
+      },
+
+      displayRightBlock: function (bool) {
+        if (!bool) {
+          return "display:none";
+        }
+        else return "display:inherit";
+      },
+      displayCenterBlock: function (bool) {
+
+        var customFieldsLength
+
+        // check for no custom fields
+        if (this.alert && this.alert.alertDefinition && !this.alert.alertDefinition.customFields) {
+          return "display:none";
+        }
+
+        // there are custom fields
+        if (this.alert && this.alert.alertDefinition) {
+          customFieldsLength = this.alert.alertDefinition.customFields.length;
+
+          if (bool && customFieldsLength > 0) {
+            return "display:inherit";
+          } else {
+            return "display:none";
+          }
+        }
+      },
+      actionMenuDisplayIs: function (alert, userIsAdmin, isExpanded) {
+        let style = 'margin-left: 15px;';
+        if (!alert) return style + "display:none;";
+        if (alert.status === "Resolved") return style + "display:none;";
+        if (!userIsAdmin && isExpanded) return style + "display:none;";
+        else return style + "display:inherit;";
+      },
+
+      secondaryBtnClassStrIs: function (alert) {
+        if (!alert) return ""
+        if (alert.status === "Resolved") return " btn u-ml btn--tertiary";
+        else return "btn u-ml";
+      },
+
+      secondaryBtnDisplayIs: function (alert, userIsAdmin, isExpanded) {
+        if (!alert) return "display:none";
+        var resolvedAndNotAdmin = alert.status == "Resolved" & !userIsAdmin;
+        var notResolvedAndNotExtended = alert.status != "Resolved" & !isExpanded;
+        if (resolvedAndNotAdmin || notResolvedAndNotExtended) return "display:none";
+        else return "display:inherit";
+      },
+
+      secondaryBtnActionIs: function (alert) {
+        if (!alert) return "";
+        var mapping = {
+          "Acknowledged": "Unacknowledge",
+          "Initiated": "Resolve",
+          "Resolved": "Delete"
+        };
+        if (mapping[alert.status]) return this.translateText(mapping[alert.status]);
+        else return "";
+      },
+
+      secondaryBtnActionIsEnglish: function (alert) {
+        if (!alert) return "";
+        var mapping = {
+          "Acknowledged": "Unacknowledge",
+          "Initiated": "Resolve",
+          "Resolved": "Delete"
+        };
+        if (mapping[alert.status]) return mapping[alert.status];
+        else return "";
+      },
+
+      primaryBtnActionIs: function (alert) {
+        if (!alert) return "";
+        var mapping = {
+          "Initiated": "Acknowledge",
+          "Acknowledged": "Resolve"
+        }
+        if (mapping[alert.status]) return this.translateText(mapping[alert.status]);
+        else return "";
+      },
+
+      primaryBtnActionIsEnglish: function (alert) {
+        if (!alert) return "";
+        var mapping = {
+          "Initiated": "Acknowledge",
+          "Acknowledged": "Resolve"
+        }
+        if (mapping[alert.status]) return mapping[alert.status];
+        else return "";
+      },
+
+      primaryBtnDisplayIs: function (alert) {
+        if (!alert) return "display:none";
+        if (alert.status === "Resolved") return "display:none";
+        else return "display:inherit";
+      },
+
+      resolvedByDisplay: function (alert) {
+        if (!alert || !alert.resolveTimestamp || !alert.resolvedByUserString) {
+          return "display:none";
+        }
+        return "";
+      },
+
+      acknowledgedByDisplay: function (alert) {
+        if (!alert || !alert.acknowledgeTimestamp || !alert.acknowledgedByUserString) {
+          return "display:none";
+        }
+        return "";
+      },
+
+      initiatedByDisplay: function (alert) {
+        if (!alert || !alert.initiateTimestamp || !alert.initiatedByUserString) {
+          return "display:none";
+        }
+        return "";
+      },
+
+      initiatedByUserIs: function (alert) {
+        return alert.initiatedByUserString;
+      },
+
+      initiatedDateIs: function (alert, curTime) {
+        return moment(alert.initiateTimestamp).format('DD-MMM-YYYY hh:mm A');
+      },
+
+      acknowledgedByUserIs: function (alert) {
+        return alert.acknowledgedByUserString;
+      },
+
+      acknowledgedDateIs: function (alert, curTime) {
+        return moment(alert.acknowledgeTimestamp).format('DD-MMM-YYYY hh:mm A');
+      },
+
+      resolvedByUserIs: function (alert) {
+        return alert.resolvedByUserString;
+      },
+
+      resolvedDateIs: function (alert, curTime) {
+        return moment(alert.resolveTimestamp).format('DD-MMM-YYYY hh:mm A');
+      },
+
+      listOfCommentsIs: function (alert) {
+        //most recent first
+        return _.sortBy(alert.alertComments, "alertCommentDate").reverse();
+      },
+
+      listOfCustomFieldsIs: function (alert) {
+        if (alert && alert.alertDefinition && alert.alertDefinition.customFields && alert.alertDefinition.customFields != undefined) {
+          _.forEach(alert.alertDefinition.customFields, (customField, key) => {
+            if (customField && customField.customField && customField.customField.archived) {
+              alert.alertDefinition.customFields.splice(key, key);
+            }
+          });
+          return _.orderBy(alert.alertDefinition.customFields, ['customField.name'], ['asc']).map(cfObj => cfObj.customField);
+        }
+      },
+
+      getCustomFieldValueById: function (fieldId) {
+        if (!this.alert.customFields) return 'undefined';
+        var values = JSON.parse(this.alert.customFields);
+        for (var i = 0; i < values.length; i++) {
+          var customField = values[i];
+          if (customField.id == fieldId) {
+            return customField.value;
+          }
+        }
+        return "";
+      },
+
+      commentDateIs: function (alert) {
+        return moment(alert.alertCommentDate).format('DD-MMM-YYYY hh:mm A');
+      },
+
+      commentCircleColorIs: function (alert) {
+        if (this.commentTypeIs(alert) === "Initiated" || this.commentTypeIs(alert) === "Unacknowledged") {
+          return "c-alert-red";
+        }
+        else if (this.commentTypeIs(alert) === "Acknowledged") {
+          return "c-alert-orange";
+        }
+        else if (this.commentTypeIs(alert) === "Resolved") {
+          return "c-alert-blue";
+        }
+        else {
+          return "c-gray6";
+        }
+      },
+
+      commentTypeIs: function (alert) {
+        return this.translateText(alert.alertCommentType, this.refreshTick);
+      },
+
+      commentIs: function (alert) {
+        return alert.alertComment;
+      },
+
+      commentUserIs: function (alert) {
+        return alert.userString;
+      },
+
+      slaCountIs: function (alert) {
+        return alert.alertSlaCount;
+      },
+
+      alertLabelTypeIs: function (alert) {
+        if (!alert) return "";
+        mapping = {
+          "Initiated": "Important",
+          "Acknowledged": "Warning",
+          "Resolved": "Healthy"
+        };
+        if (mapping[alert.status]) return mapping[alert.status];
+        else return "";
+      },
+
+      alertLabelIs: function (alert) {
+        if (alert.status == "Initiated") return this.translateText("Active", this.refreshTick);
+        else return this.translateText(alert.status, this.refreshTick);
+      },
+
+      fireChevronClickEvent: function (evt) {
+        this.fire('eandonAlertChevronClick', { alert: this.alert });
+      }
+
+    });
+  </script>
+</dom-module>
